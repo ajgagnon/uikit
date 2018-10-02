@@ -1,0 +1,25 @@
+/**
+The rounded base theme
+ */
+
+@global-primary-background: @eat-primary-color;
+@global-link-color: @global-primary-background;
+@global-link-hover-color: darken(@global-primary-background, 5);
+
+// card default
+@card-default-background: #fff;
+
+// card primary
+@card-primary-color: @global-color;
+@card-primary-title-color: @eat-primary-color;
+@card-primary-background: @eat-primary-color-light;
+
+@import 'parts/global-variables';
+@import 'parts/buttons';
+@import 'parts/text';
+@import 'parts/margin';
+@import 'parts/tab';
+@import 'parts/card';
+@import 'parts/modal';
+@import 'parts/navbar';
+@import 'custom-css';
