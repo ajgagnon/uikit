@@ -4,17 +4,18 @@
 
     overflow: hidden;
 
-    &::after {
+    &::before {
         content: "";
         width: ($accordion-title-line-height * 1em);
         height: ($accordion-title-line-height * 1em);
+        margin-left: $accordion-icon-margin-left;
         float: right;
         @include svg-fill($internal-accordion-close-image, "#000", $accordion-icon-color);
         background-repeat: no-repeat;
         background-position: 50% 50%;
     }
 
-    .uk-open > &::after { @include svg-fill($internal-accordion-open-image, "#000", $accordion-icon-color); }
+    .uk-open > &::before { @include svg-fill($internal-accordion-open-image, "#000", $accordion-icon-color); }
 
 }
 @mixin hook-accordion-title-hover(){}
@@ -25,9 +26,9 @@
 @mixin hook-inverse-accordion-title-hover(){}
 @mixin hook-inverse-component-accordion(){
 
-    .uk-accordion-title::after { @include svg-fill($internal-accordion-close-image, "#000", $inverse-global-color); }
+    .uk-accordion-title::before { @include svg-fill($internal-accordion-close-image, "#000", $inverse-global-color); }
 
-    .uk-open > .uk-accordion-title::after { @include svg-fill($internal-accordion-open-image, "#000", $inverse-global-color); }
+    .uk-open > .uk-accordion-title::before { @include svg-fill($internal-accordion-open-image, "#000", $inverse-global-color); }
 
 }
 @mixin hook-alert(){}
@@ -858,10 +859,10 @@
     // Placeholder
     //
 
-    .uk-input:-ms-input-placeholder { color: $inverse-form-placeholder-color !important; }
+    .uk-input::-ms-input-placeholder { color: $inverse-form-placeholder-color !important; }
     .uk-input::placeholder { color: $inverse-form-placeholder-color; }
 
-    .uk-textarea:-ms-input-placeholder { color: $inverse-form-placeholder-color !important; }
+    .uk-textarea::-ms-input-placeholder { color: $inverse-form-placeholder-color !important; }
     .uk-textarea::placeholder { color: $inverse-form-placeholder-color; }
 
     //
@@ -968,7 +969,7 @@
 @mixin hook-icon-link-active(){}
 @mixin hook-icon-button(){
     transition: 0.1s ease-in-out;
-    transition-property: color, background-color
+    transition-property: color, background-color;
 }
 @mixin hook-icon-button-hover(){}
 @mixin hook-icon-button-active(){}
@@ -1780,6 +1781,8 @@
 @mixin hook-section-secondary(){}
 @mixin hook-section-overlap(){}
 @mixin hook-section-misc(){}
+@mixin hook-slider(){}
+@mixin hook-slider-misc(){}
 @mixin hook-slidenav(){ transition: color 0.1s ease-in-out; }
 @mixin hook-slidenav-hover(){}
 @mixin hook-slidenav-active(){}
@@ -1791,8 +1794,6 @@
 @mixin hook-inverse-slidenav(){}
 @mixin hook-inverse-slidenav-hover(){}
 @mixin hook-inverse-slidenav-active(){}
-@mixin hook-slider(){}
-@mixin hook-slider-misc(){}
 @mixin hook-slideshow(){}
 @mixin hook-slideshow-misc(){}
 @mixin hook-sortable(){}

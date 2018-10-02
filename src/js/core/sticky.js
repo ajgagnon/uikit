@@ -1,11 +1,10 @@
 import Class from '../mixin/class';
-import {$, addClass, after, Animation, assign, attr, css, fastdom, hasClass, height, isNumeric, isString, isVisible, noop, offset, query, remove, removeClass, replaceClass, toFloat, toggleClass, trigger, within} from 'uikit-util';
+import Media from '../mixin/media';
+import {$, addClass, after, Animation, assign, attr, css, fastdom, hasClass, height, isNumeric, isString, isUndefined, isVisible, noop, offset, query, remove, removeClass, replaceClass, scrollTop, toFloat, toggleClass, trigger, within} from 'uikit-util';
 
 export default {
 
-    mixins: [Class],
-
-    attrs: true,
+    mixins: [Class, Media],
 
     props: {
         top: null,
@@ -19,7 +18,6 @@ export default {
         selTarget: String,
         widthElement: Boolean,
         showOnUp: Boolean,
-        media: 'media',
         targetOffset: Number
     },
 
@@ -35,7 +33,6 @@ export default {
         selTarget: '',
         widthElement: false,
         showOnUp: false,
-        media: false,
         targetOffset: false
     },
 
@@ -52,18 +49,13 @@ export default {
     },
 
     connected() {
-
         this.placeholder = $('+ .uk-sticky-placeholder', this.$el) || $('<div class="uk-sticky-placeholder"></div>');
-
-        if (!this.isActive) {
-            this.hide();
-        }
     },
 
     disconnected() {
 
         if (this.isActive) {
-            this.isActive = false;
+            this.isActive = undefined;
             this.hide();
             removeClass(this.selTarget, this.clsInactive);
         }
@@ -119,7 +111,7 @@ export default {
                         const elHeight = this.$el.offsetHeight;
 
                         if (this.isActive && elTop + elHeight >= top && elTop <= top + target.offsetHeight) {
-                            window.scroll(0, top - elHeight - (isNumeric(this.targetOffset) ? this.targetOffset : 0) - this.offset);
+                            scrollTop(window, top - elHeight - (isNumeric(this.targetOffset) ? this.targetOffset : 0) - this.offset);
                         }
 
                     });
@@ -135,28 +127,37 @@ export default {
 
         {
 
-            write() {
+            read({height}) {
 
-                const {placeholder, $el: {offsetHeight}} = this;
+                this.topOffset = offset(this.isActive ? this.placeholder : this.$el).top;
+                this.bottomOffset = this.topOffset + height;
 
-                css(placeholder, assign(
-                    {height: css(this.$el, 'position') !== 'absolute' ? offsetHeight : ''},
-                    css(this.$el, ['marginTop', 'marginBottom', 'marginLeft', 'marginRight'])
-                ));
+                const bottom = parseProp('bottom', this);
+
+                this.top = Math.max(toFloat(parseProp('top', this)), this.topOffset) - this.offset;
+                this.bottom = bottom && bottom - height;
+                this.inactive = !this.matchMedia;
+
+                return {
+                    height: !this.isActive ? this.$el.offsetHeight : height,
+                    margins: css(this.$el, ['marginTop', 'marginBottom', 'marginLeft', 'marginRight'])
+                };
+            },
+
+            write({height, margins}) {
+
+                const {placeholder} = this;
+
+                css(placeholder, assign({height}, margins));
 
                 if (!within(placeholder, document)) {
                     after(this.$el, placeholder);
                     attr(placeholder, 'hidden', '');
                 }
 
-                this.topOffset = offset(this.isActive ? placeholder : this.$el).top;
-                this.bottomOffset = this.topOffset + offsetHeight;
-
-                const bottom = parseProp('bottom', this);
-
-                this.top = Math.max(toFloat(parseProp('top', this)), this.topOffset) - this.offset;
-                this.bottom = bottom && bottom - offsetHeight;
-                this.inactive = this.media && !window.matchMedia(this.media).matches;
+                if (isUndefined(this.isActive)) {
+                    this.hide();
+                }
 
             },
 

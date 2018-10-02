@@ -1,4 +1,4 @@
-import {assign, attr, bind, camelize, data as getData, getCssVar, hasAttr, hasOwn, hyphenate, isArray, isFunction, isPlainObject, isString, isUndefined, mergeOptions, on, parseOptions, startsWith, toBoolean, toFloat, toList, toNumber} from 'uikit-util';
+import {assign, bind, camelize, data as getData, hasOwn, hyphenate, isArray, isBoolean, isFunction, isPlainObject, isString, isUndefined, mergeOptions, on, parseOptions, startsWith, toBoolean, toList, toNumber} from 'uikit-util';
 
 export default function (UIkit) {
 
@@ -114,7 +114,7 @@ export default function (UIkit) {
     UIkit.prototype._initObserver = function () {
 
         let {attrs, props, el} = this.$options;
-        if (this._observer || !props || !attrs) {
+        if (this._observer || !props || attrs === false) {
             return;
         }
 
@@ -129,9 +129,11 @@ export default function (UIkit) {
 
         });
 
+        const filter = attrs.map(key => hyphenate(key)).concat(this.$name);
+
         this._observer.observe(el, {
             attributes: true,
-            attributeFilter: attrs.map(key => hyphenate(key)).concat([this.$name, `data-${this.$name}`])
+            attributeFilter: filter.concat(filter.map(key => `data-${key}`))
         });
     };
 
@@ -146,9 +148,13 @@ export default function (UIkit) {
 
         for (const key in props) {
             const prop = hyphenate(key);
-            if (hasAttr(el, prop)) {
+            let value = getData(el, prop);
 
-                const value = coerce(props[key], attr(el, prop));
+            if (!isUndefined(value)) {
+
+                value = props[key] === Boolean && value === ''
+                    ? true
+                    : coerce(props[key], value);
 
                 if (prop === 'target' && (!value || startsWith(value, '_'))) {
                     continue;
@@ -199,7 +205,7 @@ export default function (UIkit) {
             event = ({name: key, handler: event});
         }
 
-        let {name, el, handler, capture, delegate, filter, self} = event;
+        let {name, el, handler, capture, passive, delegate, filter, self} = event;
         el = isFunction(el)
             ? el.call(component)
             : el || component.$el;
@@ -229,7 +235,9 @@ export default function (UIkit) {
                         ? delegate
                         : delegate.call(component),
                 handler,
-                capture
+                isBoolean(passive)
+                    ? {passive, capture}
+                    : capture
             )
         );
 
@@ -259,25 +267,9 @@ export default function (UIkit) {
             return toNumber(value);
         } else if (type === 'list') {
             return toList(value);
-        } else if (type === 'media') {
-            return toMedia(value);
         }
 
         return type ? type(value) : value;
-    }
-
-    function toMedia(value) {
-
-        if (isString(value)) {
-            if (value[0] === '@') {
-                const name = `media-${value.substr(1)}`;
-                value = toFloat(getCssVar(name));
-            } else if (isNaN(value)) {
-                return value;
-            }
-        }
-
-        return value && !isNaN(value) ? `(min-width: ${value}px)` : false;
     }
 
     function normalizeData({data, el}, {args, props = {}}) {

@@ -5,8 +5,6 @@ import {$, assign, clamp, fastdom, getIndex, hasClass, isNumber, isRtl, Promise,
 
 export default {
 
-    attrs: true,
-
     mixins: [SliderAutoplay, SliderDrag, SliderNav],
 
     props: {

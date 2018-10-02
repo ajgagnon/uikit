@@ -1,18 +1,13 @@
-import {css, Dimensions, endsWith, fragment, getImage, height, isInView, isNumeric, noop, once, queryAll, startsWith, toFloat, width} from 'uikit-util';
+import {createEvent, css, Dimensions, endsWith, getImage, height, includes, isInView, isNumeric, noop, queryAll, startsWith, toFloat, trigger, width} from 'uikit-util';
 
 export default {
-
-    attrs: true,
 
     props: {
         dataSrc: String,
         dataSrcset: Boolean,
-        dataSizes: Boolean,
         sizes: String,
         width: Number,
         height: Number,
-        dataWidth: Number,
-        dataHeight: Number,
         offsetTop: String,
         offsetLeft: String,
         target: String
@@ -21,7 +16,6 @@ export default {
     data: {
         dataSrc: '',
         dataSrcset: false,
-        dataSizes: false,
         sizes: false,
         width: false,
         height: false,
@@ -74,73 +68,73 @@ export default {
             setSrcAttrs(this.$el, getPlaceholderImage(this.width, this.height, this.sizes));
         }
 
-        once(this.$el, 'load', () => this.$update(this.$el, 'resize'));
-
     },
 
-    update: [
+    update: {
 
-        {
+        read({delay, image}) {
 
-            read({delay, image}) {
+            if (!delay) {
+                return;
+            }
 
-                if (!delay) {
-                    return;
+            if (image || !this.target.some(el => isInView(el, this.offsetTop, this.offsetLeft, true))) {
+
+                if (!this.isImg && image) {
+                    image.then(img => img && setSrcAttrs(this.$el, currentSrc(img)));
                 }
 
-                if (image || !this.target.some(el => isInView(el, this.offsetTop, this.offsetLeft, true))) {
+                return;
+            }
 
-                    if (!this.isImg && image) {
-                        image.then(img => img && setSrcAttrs(this.$el, currentSrc(img)));
-                    }
+            return {
+                image: getImage(this.dataSrc, this.dataSrcset, this.sizes).then(img => {
 
-                    return;
-                }
+                    setSrcAttrs(this.$el, currentSrc(img), img.srcset, img.sizes);
+                    storage[this.cacheKey] = currentSrc(img);
+                    return img;
 
-                return {
-                    image: getImage(this.dataSrc, this.dataSrcset, this.sizes).then(img => {
+                }, noop)
+            };
 
-                        setSrcAttrs(this.$el, currentSrc(img), img.srcset, img.sizes);
-                        storage[this.cacheKey] = currentSrc(img);
-                        return img;
+        },
 
-                    }, noop)
-                };
+        write(data) {
 
-            },
+            // Give placeholder images time to apply their dimensions
+            if (!data.delay) {
+                this.$emit();
+                return data.delay = true;
+            }
 
-            write(data) {
+        },
 
-                // Give placeholder images time to apply their dimensions
-                if (!data.delay) {
-                    this.$emit();
-                    return data.delay = true;
-                }
+        events: ['scroll', 'load', 'resize']
 
-            },
-
-            events: ['scroll', 'load', 'resize']
-
-        }
-
-    ]
+    }
 
 };
 
 function setSrcAttrs(el, src, srcset, sizes) {
 
     if (isImg(el)) {
-        src && (el.src = src);
-        srcset && (el.srcset = srcset);
         sizes && (el.sizes = sizes);
-    } else {
-        src && css(el, 'backgroundImage', `url(${src})`);
+        srcset && (el.srcset = srcset);
+        src && (el.src = src);
+    } else if (src) {
+
+        const change = !includes(el.style.backgroundImage, src);
+        css(el, 'backgroundImage', `url(${src})`);
+        if (change) {
+            trigger(el, createEvent('load', false));
+        }
+
     }
 
 }
 
 const sizesRe = /\s*(.*?)\s*(\w+|calc\(.*?\))\s*(?:,|$)/g;
-function getPlaceholderImage(width, height, sizes, color = 'transparent') {
+function getPlaceholderImage(width, height, sizes) {
 
     if (sizes) {
         let matches;
@@ -158,7 +152,7 @@ function getPlaceholderImage(width, height, sizes, color = 'transparent') {
 
     }
 
-    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" fill="${color}"></rect></svg>`;
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"></svg>`;
 }
 
 const sizeRe = /\d+(?:\w+|%)/g;
